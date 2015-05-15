@@ -1,0 +1,115 @@
+package pwmng;
+
+import java.io.IOException;
+
+public class AMsys {
+    DataCenter dc;
+    EnterpriseSystem es;//=new EnterpriseSystem(null, null);
+    InteractiveSystem is;//=new WebBasedSystem(null, null);
+    ComputeSystem cs;//=new ComputeSystem(null, null);
+    static int kalmanIndex = 0;
+    double util=0;
+    public AMsys(DataCenter dtcenter) {
+        dc=dtcenter;
+    }
+    public AMsys(EnterpriseSystem TS) {
+        es=TS;
+    }
+    public AMsys(InteractiveSystem IS) {
+        is=IS;
+    }
+    public AMsys(ComputeSystem CS) {
+        cs=CS;
+    }
+    public void Analysis(ComputeSystem i,violation vilation)
+    {
+        //if violation happended
+        //increase frequency of the servers
+       if (vilation ==violation.ComputeNodeShortage | vilation ==violation.DEADLINEPASSED)
+       {   for(int k=0;k<i.ComputeNodeList.size();k++)
+                i.ComputeNodeList.get(k).increaseFrequency();
+            //System.out.println("increase Frequency!!     " +Main.localTime);
+       }
+           //if no violation decrease
+        else if(vilation==violation.NOTHING)
+        {
+            //System.out.println("Decrease Frequency!!" );
+            for(int k=0;k<i.ComputeNodeList.size();k++)
+               i.ComputeNodeList.get(k).decreaseFrequency();
+        }
+    }
+
+    public void Analysis(InteractiveSystem i,int violation)
+    {
+        //if violation happended
+          if(violation>0)
+              is.rc.resourceAlocViolation(is);
+    }
+    public void Analysis(EnterpriseSystem esES,int violation)
+    {
+        //if violation happended
+          if(violation>0)
+              is.rc.resourceAlocViolation(is);
+    }
+
+      void serverProvisioning() {
+        int[] numberOfPredictedReq = {251, 246, 229, 229, 223, 225, 231, 241, 265, 265, 271, 276, 273, 273, 268, 258, 255, 257, 242, 241, 233, 228, 231, 261, 274, 302, 343, 375, 404, 405, 469, 562, 1188, 1806, 2150, 2499, 2624, 2793, 2236, 1905, 1706, 1558, 1495, 1448, 1414, 1391, 1430, 1731, 2027, 2170, 2187, 2224, 2363, 1317};
+        if (kalmanIndex >= numberOfPredictedReq.length) {
+            return;
+        }
+        es.numberOfActiveServ = (int) Math.floor(numberOfPredictedReq[kalmanIndex]*5*es.applicationList.get(0).NumberofBasicNode/ es.applicationList.get(0).MaxNumberOfRequest);
+        if (es.numberOfActiveServ > es.numberofNode) {
+            System.out.println("In ES : is gonna alocate this number of servers: "+(es.numberOfActiveServ-es.numberofNode));
+        }
+    }
+    public void Plannig(EnterpriseSystem esES)
+    {
+        /////Server Provisioning for each application Bundle///////////
+        if(Main.localTime%1200==0)
+        {
+//                numberOfActiveServ=0;
+//                kalmanIndex=Main.localTime/1200;
+//                serverProvisioning();
+//                kalmanIndex++;
+                int i=es.applicationList.get(0).occupiedPercentage();
+                //System.out.println("occupied\t"+i);
+//                if(i>50)
+//                  es.numberOfActiveServ=es.applicationList.get(0).numberofRunningNode()+1;
+//                else
+//                  es.numberOfActiveServ=es.applicationList.get(0).numberofRunningNode()-1;
+        }
+   }
+    public void execution(EnterpriseSystem esES)
+    {
+        if(Main.localTime%1200==2)
+          es.rc.resourceProvision(es,es.numberOfActiveServ);
+        ///////////////////////////////////////////////////////////////
+    }
+
+    public void monitor(EnterpriseSystem esES ) throws IOException
+    {
+        es.SLAviolation = 0;
+        for (int i = 0; i < es.applicationList.size(); i++) {
+            es.SLAviolation = +es.applicationList.get(i).SLAviolation;
+        }
+        if (es.SLAviolation > 0) {
+            Main.SLALogE.write(esES.name+ "\t"+ Main.localTime + "\t" + es.SLAviolation + "\n");
+            es.numberOfViolation++;
+        }
+        calcSysUtility();
+    }
+    public void calcSysUtility(){
+        int localUtil=0, globalUtil;
+        for(int i=0;i< es.applicationList.size();i++)
+                    localUtil += es.applicationList.get(i).AM.util*100;
+        localUtil=localUtil/es.applicationList.size();
+        int idlePercent=100*es.numberofIdleNode/es.numberofNode;
+        int qos=es.SLAviolation;
+        globalUtil=idlePercent+localUtil;
+        util=sigmoid(globalUtil-100);        
+    }
+    private static double sigmoid(double x)
+    {
+        return 1 / (1 + Math.exp(-x));
+    }
+}

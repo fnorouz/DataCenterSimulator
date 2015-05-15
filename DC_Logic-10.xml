@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is a comment -->
+<DataCenter>
+    <layout>DC.xml</layout>
+    <System>
+        <name> Enterprise_01 </name>
+        <motype> Enterprise_01 </motype>
+        <type> Enterprise </type>
+        <configFile> ES-10.xml </configFile>
+    </System>
+    <System>
+        <name> Enterprise_02 </name>
+        <motype> Enterprise_02 </motype>
+        <type> Enterprise </type>
+        <configFile> ES2-10.xml </configFile>
+    </System>
+<!--    <System>
+        <name> Inter_01 </name>
+        <type> Interactive </type>
+        <motype> Inter01 </motype>
+        <configFile> IS.xml </configFile>
+    </System>-->
+<!--    <System> 
+        <name> HPC_1 </name>
+        <motype> HPC_First </motype>
+        <type> HPC </type>
+        <configFile> CS.xml </configFile>
+    </System>-->
+</DataCenter>

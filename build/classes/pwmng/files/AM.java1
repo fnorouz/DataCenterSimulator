@@ -1,0 +1,155 @@
+package pwmng;
+
+public class AM {
+    DataCenter dc;
+    EnterpriseSystem ts;//=new EnterpriseSystem(null, null);
+    InteractiveSystem is;//=new WebBasedSystem(null, null);
+    ComputeSystem cs;//=new ComputeSystem(null, null);
+    EnterpriseApp ab;//=new application(null, null);
+    InteractiveBoN wl;//=new WebBasedBoN();
+    static int state=0;
+    static int kk=0;
+    public AM(DataCenter dtcenter) {
+        dc=dtcenter;
+    }
+    public AM(EnterpriseSystem TS) {
+        ts=TS;
+    }
+    public AM(InteractiveSystem IS) {
+        is=IS;
+    }
+    public AM(ComputeSystem CS) {
+        cs=CS;
+    }
+    public AM(EnterpriseApp AB) {
+        ab=AB;
+    }
+    public AM(InteractiveBoN WB) {
+        wl=WB;
+    }
+    public void Analysis(ComputeSystem i,violation vilation)
+    {
+        //if violation happended
+        //increase frequency of the servers
+       if (vilation ==violation.ComputeNodeShortage | vilation ==violation.DEADLINEPASSED)
+       {   for(int k=0;k<i.ComputeNodeList.size();k++) {
+               i.ComputeNodeList.get(k).increaseFrequency();
+           }
+            //System.out.println("increase Frequency!!     " +Main.localTime);
+       }
+           //if no violation decrease
+        else if(vilation==violation.NOTHING)
+        {
+            //System.out.println("Decrease Frequency!!" );
+            for(int k=0;k<i.ComputeNodeList.size();k++) {
+                i.ComputeNodeList.get(k).decreaseFrequency();
+            }
+        }
+    }
+
+    public void Analysis(InteractiveSystem i,int violation)
+    {
+        //if violation happended
+          if(violation>0) {
+            is.rc.resourceAlocViolation(is);
+        }
+    }
+    public void Analysis(EnterpriseSystem i,int violation)
+    {
+        //if violation happended
+        if(violation>0) {
+            ts.rc.resourceAlocViolation(ts);
+        }
+   }
+    public void Analysis(EnterpriseApp i,int violation)
+    {
+        
+        if(violation >0) {
+            kk++;
+        }
+        if(state==0) //Nochange state
+        {
+            if(violation==0)
+            {
+               for(int j=0;j<ab.ComputeNodeList.size();j++)
+               {
+                   if(ab.ComputeNodeList.get(j).ready==1) {
+                       ab.ComputeNodeList.get(j).decreaseFrequency();
+                   }
+               }
+               state=1;
+               return;
+            }
+            if(violation>0)
+            {
+               for(int j=0;j<ab.ComputeNodeList.size();j++)
+               {
+                   if(ab.ComputeNodeList.get(j).ready==0) {
+                       ab.ComputeNodeList.get(j).increaseFrequency();
+                   }
+//                 System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+
+               }
+               state=2;
+//               System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+               return;
+            }
+        }
+        if(state==1) //Decrease State
+        {
+            if(violation==0)
+            {
+            for(int j=0;j<ab.ComputeNodeList.size();j++)
+                 if(ab.ComputeNodeList.get(j).ready==1) {
+                    ab.ComputeNodeList.get(j).decreaseFrequency();
+                }
+                state=0;
+                return;
+            }
+            if(violation>0)
+            {
+                for(int j=0;j<ab.ComputeNodeList.size();j++)
+                     if(ab.ComputeNodeList.get(j).ready==0)
+                     {     ab.ComputeNodeList.get(j).increaseFrequency();
+//                           System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+                     }
+               state=2;
+
+               return;
+            }
+        }
+        if(state==2)//Increase State
+        {
+            if (violation>0)
+            {
+                for(int j=0;j<ab.ComputeNodeList.size();j++)
+                    if(ab.ComputeNodeList.get(j).ready==0)
+                    {ab.ComputeNodeList.get(j).increaseFrequency();
+//                     System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+                    }
+               state=2;
+//               System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+               return;
+            }
+            if(violation==0)
+            {
+                state=0;
+                for(int j=0;j<ab.ComputeNodeList.size();j++)
+                     if(ab.ComputeNodeList.get(j).ready==1)
+                        ab.ComputeNodeList.get(j).decreaseFrequency();
+            }
+        }
+
+        }
+
+    public void Analysis(InteractiveBoN i,int violation)
+    {
+        /*int j=0;
+        if(violation>0)
+        {
+            for(j=0;j<i.ComputeNodeList.size();j++)
+                if(i.ComputeNodeList.get(j).SLAviolation==true)
+                    i.ComputeNodeList.get(j).increaseFrequency();
+        }*/
+    }
+}

@@ -1,0 +1,44 @@
+Initialize pwmng.AMApplication2@ca470 of type EntApp01 for Enterprise Application 1 At Time= 1
+Initialize pwmng.AMApplication2@142bece of type EntApp01 for Enterprise Application 2 At Time= 1
+Initialize pwmng.AMApplication2@fcfa52 of type EntApp01 for Enterprise Application 3 At Time= 1
+Initialize pwmng.AMApplication2@961dff of type EntApp01 for Enterprise Application 4 At Time= 1
+Initialize pwmng.AMApplication2@18b81e3 of type EntApp01 for Enterprise Application 5 At Time= 1
+Initialize pwmng.AMApplication3@1fc6e42 of type EntApp02 for Enterprise Application 6 At Time= 1
+Initialize pwmng.AMEnterpriseSys2@1aaf0b3 of type Enterprise_01 for  EnterPrise System Enterprise_01 At Time= 1
+-------------- Begin AM Under Privillages -------------
+	pwmng.AMApplication2@ca470 of type EntApp01
+	pwmng.AMApplication2@142bece of type EntApp01
+	pwmng.AMApplication2@fcfa52 of type EntApp01
+	pwmng.AMApplication2@961dff of type EntApp01
+	pwmng.AMApplication2@18b81e3 of type EntApp01
+-------------- End AM Under Privillages -------------
+Initialize pwmng.AMApplication3@1d2fc36 of type EntApp02 for Enterprise Application 1 At Time= 1
+Initialize pwmng.AMApplication3@ac6a45 of type EntApp02 for Enterprise Application 2 At Time= 1
+Initialize pwmng.AMApplication3@175078b of type EntApp02 for Enterprise Application 3 At Time= 1
+Initialize pwmng.AMApplication3@42552c of type EntApp02 for Enterprise Application 4 At Time= 1
+Initialize pwmng.AMEnterpriseSys3@e5bbd6 of type Enterprise_02 for  EnterPrise System Enterprise_02 At Time= 1
+-------------- Begin AM Under Privillages -------------
+	pwmng.AMApplication3@1fc6e42 of type EntApp02
+	pwmng.AMApplication3@1d2fc36 of type EntApp02
+	pwmng.AMApplication3@ac6a45 of type EntApp02
+	pwmng.AMApplication3@175078b of type EntApp02
+	pwmng.AMApplication3@42552c of type EntApp02
+-------------- End AM Under Privillages -------------
+Initialize pwmng.AMApplication3@3fa5ac of type EntApp02 for Enterprise Application 5 At Time= 100
+Initialize pwmng.AMApplication3@95cfbe of type EntApp02 for Enterprise Application 6 At Time= 100
+Initialize pwmng.AMApplication3@179dce4 of type EntApp02 for Enterprise Application 7 At Time= 100
+Initialize pwmng.AMApplication3@1950198 of type EntApp02 for Enterprise Application 8 At Time= 100
+Destroy Enterprise Application  	4At Time= 65580
+Destroy Enterprise Application  	4At Time= 65580
+Destroy Enterprise Application  	5At Time= 65581
+Destroy Enterprise Application  	6At Time= 65679
+Destroy Enterprise Application  	8At Time= 65679
+Destroy Enterprise Application  	5At Time= 65680
+Destroy Enterprise Application  	7At Time= 65681
+Destroy Enterprise Application  	1At Time= 73933
+Destroy Enterprise Application  	1At Time= 73933
+Destroy Enterprise Application  	2At Time= 73934
+Destroy Enterprise Application  	6At Time= 73934
+Destroy Enterprise Application  	2At Time= 73934
+Destroy Enterprise Application  	3At Time= 223824
+Destroy Enterprise Application  	3At Time= 223824

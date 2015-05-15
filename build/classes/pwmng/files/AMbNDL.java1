@@ -1,0 +1,124 @@
+package pwmng;
+
+public class AMbNDL {
+    DataCenter dc;
+    EnterpriseApp app;//=new application(null, null);
+    InteractiveBoN wl;//=new WebBasedBoN();
+    static int state=0;
+    static int kk=0;
+    double util=0;
+    public AMbNDL(DataCenter dtcenter) {
+        dc=dtcenter;
+    }
+    public AMbNDL(EnterpriseApp AB) {
+        app=AB;
+    }
+    public AMbNDL(InteractiveBoN WB) {
+        wl=WB;
+    }
+    public void monitor (EnterpriseApp ebEB)
+    {
+        SLAcal(); //calculate SLA violation of itself
+        localUtilCal();
+    }
+    public void monitor (InteractiveBoN intBon)
+    {
+        /////////////////////
+    }
+
+    public void localUtilCal()
+    {
+        int n ; //Sleep nodes
+        double CPU=app.getAverageCPUutil(); //average CPU utilization of nodes
+        double a,b,c,l,k,j,i;
+        int H,M,L,N=PercentOfSleepNode(); //number of nodes in each freq level
+        H=percenOfNodeFreqLevel(2);
+        M=percenOfNodeFreqLevel(1);
+        L=percenOfNodeFreqLevel(0);
+        double f=(L*0.1+M*0.1+H*1)*1+N*1+app.SLAviolation*1+1*CPU;
+        util= sigmoid(f/100-1);
+        //System.out.println("util= "+util);
+    }
+    private static double sigmoid(double x)
+    {
+        return 1 / (1 + Math.exp(-x));
+    }
+    public int PercentOfSleepNode(){
+        int j=0,num=0;
+        for( j=0;j<app.ComputeNodeList.size();j++)
+                    if(app.ComputeNodeList.get(j).Mips==0)
+                        num++;
+        return (int) (num*100/app.ComputeNodeList.size());
+    }
+     public int percenOfNodeFreqLevel(int level){
+        int num=0;
+        int j=0;
+        for( j=0;j<app.ComputeNodeList.size();j++)
+        {
+                if(app.ComputeNodeList.get(j).Mips==app.ComputeNodeList.get(j).frequencyLevel[level])
+                    num++;
+        }
+        return (int) (num*100/app.ComputeNodeList.size());
+    }
+
+    public void SLAcal(){
+        app.SLAviolation=0;
+        int percentage=app.ComputeNodeList.get(0).SLAPercentage;
+        int treshold= app.ComputeNodeList.get(0).timeTreshold;
+        double tmp=0;
+        double totalJob=0;
+        for(int j=0;j<app.responseList.size();j++)
+            {
+                if(app.responseList.get(j).responseTime> treshold)
+                    tmp=app.responseList.get(j).numberOfJob+tmp;
+                totalJob=totalJob+app.responseList.get(j).numberOfJob;
+            }
+        app.responseList.clear();
+        if((tmp*100.0/totalJob)>(100.0-percentage)) //SLAviolation: percentage of jobs have violation
+        {
+                app.SLAviolation=(int) Math.ceil(tmp*100.0/totalJob);
+               // System.out.println("SLA violation Application\t"+SLAviolation);
+        }
+    }
+    
+    public void Analysis(EnterpriseApp i,int violation)
+    {
+        if(violation >0)
+            kk++;   
+        if(violation==0)
+         {
+               for(int j=0;j<app.ComputeNodeList.size();j++)
+               {
+                   if(app.ComputeNodeList.get(j).ready==1)
+                        app.ComputeNodeList.get(j).decreaseFrequency();
+               }
+               return;
+         }
+         if(violation>0)
+         {
+               if (Main.communicationAM==1)
+               {
+                   Main.communicationAM=0;
+                   return;
+               }
+               for(int j=0;j<app.ComputeNodeList.size();j++)
+               {
+                   if(app.ComputeNodeList.get(j).ready==0)
+                       app.ComputeNodeList.get(j).increaseFrequency();
+//                 System.out.println(violation+"  INCREASE  \t" +Main.localTime);
+               }
+         }
+    }
+    
+    public void Analysis(InteractiveBoN i,int violation)
+    {
+        /*int j=0;
+        if(violation>0)
+        {
+            for(j=0;j<i.ComputeNodeList.size();j++)
+                if(i.ComputeNodeList.get(j).SLAviolation==true)
+                    i.ComputeNodeList.get(j).increaseFrequency();
+        }*/
+    }
+    
+}

@@ -1,0 +1,337 @@
+package pwmng;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+public class EnterpriseBoN {
+    int id=0;
+    int usedNode=0;
+    int maxProc=0, minProc=0, maxExpectedResTime=0;
+    ArrayList <BladeServer> ComputeNodeList;
+    ArrayList <Integer> ComputeNodeIndex;
+    ArrayList <EnterpriseJob> queueApp;
+    jobPlacement placement;
+    int timeTreshold=0;
+    int SLAPercentage;
+    int SLAviolation;
+    BufferedReader bis = null;
+    File logFile;
+    AutonomicManager AM;
+    int MaxNumberOfRequest=0; //# of Request can be handled by number of basic node which for 100% CPU utilization
+    int NumberofBasicNode=0;
+    public EnterpriseBoN (Node node)
+    {
+        ComputeNodeList=new ArrayList<BladeServer>();
+        queueApp=new ArrayList<EnterpriseJob>();
+        ComputeNodeIndex=new ArrayList<Integer>();
+        readFromNode(node);
+        configSLAallcomputingNode();
+        placement= new jobPlacement(ComputeNodeList) ;
+        AM=new AutonomicManager(this);
+    }
+    void configSLAallcomputingNode()
+    {
+        for(int i=0;i<ComputeNodeList.size();i++)
+             ComputeNodeList.get(i).configSLAparameter(timeTreshold, SLAPercentage);
+    }
+
+    void addCompNodetoBundle(BladeServer b){
+        b.restart();
+        ComputeNodeList.add(b);
+    }
+    void removeCompNodeFromBundle(BladeServer b)
+    {
+        b.restart();
+        b.ready=-2;
+        ComputeNodeList.remove(b);
+    }
+     void setReadyFlag()
+    {
+        for (int i =0;i<ComputeNodeList.size();i++)
+        {
+            if(ComputeNodeList.get(i).ready!=-1) //-1 : means this server is idle not so as to compute its idle power
+            {
+            if(ComputeNodeList.get(i).queueLength==0)
+             {ComputeNodeList.get(i).ready=1;ComputeNodeList.get(i).currentCPU=0;}// bahs
+             else
+             {ComputeNodeList.get(i).ready=0;
+             System.out.println("queulength: "+ComputeNodeList.get(i).queueLength);}
+            }
+        }
+    }
+    /*
+     Return Values:
+     * 1: read successfully
+     * 0:put in waiting list
+     * -1: end of file or error
+     */
+    int readingLogFile()
+    {
+        try {
+            String line = bis.readLine();
+            if (line == null) {
+                return -2;
+            }
+            line = line.replace("\t", " ");
+            String[] numbers= new String[2];
+            numbers = line.trim().split(" ");
+            if (numbers.length < 2) {
+                return -2;
+            }
+            EnterpriseJob j=new EnterpriseJob();
+            j.arrivalTimeOfJob = Integer.parseInt(numbers[0]);
+            j.numberOfJob=5*Double.parseDouble(numbers[1]);
+            queueApp.add(j);
+            return 1;
+              //System.out.println("Readed inputTime= " + inputTime + " Job Reqested Time=" + j.startTime+" Total job so far="+ total);
+        } catch (IOException ex) {
+            System.out.println("readJOB EXC readJOB false ");
+            Logger.getLogger(Scheduler.class.getName()).log(Level.SEVERE, null, ex);
+            return -2;
+        }
+    }
+    int readWebJob() {
+        int retReadLogfile=readingLogFile();
+        if(queueApp.size()>0)
+        {           
+            if (queueApp.get(0).arrivalTimeOfJob==Main.localTime | queueApp.get(0).arrivalTimeOfJob < Main.localTime)
+            {
+                return 1;
+            }
+            else return 0;
+       }
+        // ending condition means there is no job in the logfile
+        System.out.println("in the readWebJob           "+retReadLogfile);
+        return retReadLogfile;
+    } 
+    int forwardingJob()
+    {
+        int readingResult=readWebJob();
+        EnterpriseJob jj=new EnterpriseJob();
+        while(readingResult==1)
+        {
+           int index=placement.whichServer();
+           //System.out.println("Enterprise index\t"+index);
+           if(index!=-2)
+           {    // System.out.println("indeex=  "+serverList.get(index).currentC PU);
+                double capacityOfJob=MaxNumberOfRequest*ComputeNodeList.get(index).Mips*(100-ComputeNodeList.get(index).currentCPU)/(NumberofBasicNode*100);
+                if(capacityOfJob<queueApp.get(0).numberOfJob) // should go to next node and dont remove current job from the list
+                {
+                    jj.numberOfJob=capacityOfJob;
+                    jj.arrivalTimeOfJob=queueApp.get(0).arrivalTimeOfJob;
+                    ComputeNodeList.get(index).feedWork(jj);
+                    ComputeNodeList.get(index).ready=0;
+                    queueApp.get(0).numberOfJob=queueApp.get(0).numberOfJob- capacityOfJob;
+                }
+                else if(capacityOfJob==queueApp.get(0).numberOfJob)
+                {
+                    jj.numberOfJob=queueApp.get(0).numberOfJob;
+                    jj.arrivalTimeOfJob=queueApp.get(0).arrivalTimeOfJob;
+                    ComputeNodeList.get(index).feedWork(jj);
+                    ComputeNodeList.get(index).ready=0;
+                    queueApp.remove(0);
+                }
+                else if(capacityOfJob> queueApp.get(0).numberOfJob)
+                {
+                    jj.numberOfJob=queueApp.get(0).numberOfJob;
+                    jj.arrivalTimeOfJob=queueApp.get(0).arrivalTimeOfJob;
+                    ComputeNodeList.get(index).feedWork(jj);
+                    ComputeNodeList.get(index).ready=1;
+                    ComputeNodeList.get(index).currentCPU=(NumberofBasicNode*100*queueApp.get(0).numberOfJob)/
+                                                                    (MaxNumberOfRequest*ComputeNodeList.get(index).Mips);
+                    queueApp.remove(0);
+                }
+           }
+           else return readingResult;
+           readingResult=readWebJob();
+        }
+        return readingResult;
+    }
+    void resetReadyFlag()
+    {
+        int i;
+        for(i=0;i<ComputeNodeList.size();i++)
+        {
+            ComputeNodeList.get(i).currentCPU=0;
+                ComputeNodeList.get(i).ready=1;
+        }
+    }
+    //False: logfile is finished and no remain job
+    boolean runAcycle()
+    {
+        resetReadyFlag();
+        int readingResult=forwardingJob();
+        
+       int remainJobInBundle=0;
+       for (int i =0;i<ComputeNodeList.size();i++)
+        {
+            remainJobInBundle=remainJobInBundle+ ComputeNodeList.get(i).run(new EnterpriseJob(),NumberofBasicNode,MaxNumberOfRequest);
+            if(ComputeNodeList.get(i).currentCPU<100)
+                ComputeNodeList.get(i).ready=1;
+            if(ComputeNodeList.get(i).currentCPU==100)
+                ComputeNodeList.get(i).ready=0;
+            if(ComputeNodeList.get(i).queueLength!=0)
+                System.out.println("runACycle   "+ComputeNodeList.get(i).queueLength+"\t   i="+ i);
+        }
+       //setReadyFlag();
+       violationCheckandSet();
+       //if(Main.localTime%120==0)
+        //   AM.Analysis(this, SLAviolation);
+       if(remainJobInBundle==0 && readingResult==-2)
+        {
+            return false;
+        }
+        else return true;
+    }
+    ArrayList getindexSet()
+    {
+        return ComputeNodeIndex;
+    }
+     int numberofRunningNode()
+    {
+        return  ComputeNodeList.size();
+    }
+    int occupiedPercentage()
+    {
+        int i= (int)Math.ceil(usedNode*100/(120*ComputeNodeList.size()));
+        usedNode=0;
+        return i;
+    }
+    void violationCheckandSet(){
+        SLAviolation=0;
+        ArrayList<responseTime> test=new ArrayList<responseTime> ();
+        int percentage=ComputeNodeList.get(0).SLAPercentage;
+        int treshold= ComputeNodeList.get(0).timeTreshold;
+        double tmp=0;
+        double totalJob=0;
+        for (int i =0;i<ComputeNodeList.size();i++)
+        {
+            test=ComputeNodeList.get(i).responseList;
+
+            for(int j=0;j<test.size();j++)
+            {
+                if(test.get(j).responseTime> treshold)
+                    tmp=test.get(j).numberOfJob+tmp;
+                totalJob=totalJob+test.get(j).numberOfJob;
+            }
+            ComputeNodeList.get(i).responseList.clear();
+        }
+        if((tmp*100/totalJob)>(100-percentage)) //SLAviolation: percentage of jobs have violation
+        {
+                SLAviolation=(int) Math.ceil(tmp*100.0/totalJob);
+                //System.out.println("\t"+tmp);
+        }
+        return;
+    }
+void parseXmlConfig(String config) {
+        try {
+            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+            Document doc = docBuilder.parse(new File(config));
+            // normalize text representation
+            doc.getDocumentElement().normalize();
+            readFromNode(doc.getDocumentElement());
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(DataCenter.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SAXException ex) {
+            Logger.getLogger(DataCenter.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(DataCenter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    void readFromNode(Node node)
+    {
+        ComputeNodeList.clear();
+        NodeList childNodes = node.getChildNodes();
+        for(int i=0;i<childNodes.getLength();i++)
+        {
+            if(childNodes.item(i).getNodeType() == Node.ELEMENT_NODE)
+            {
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("id"))
+                  id=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim()); //Id of the application
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("WorkLoad"))
+                {
+                    String fileName= childNodes.item(i).getChildNodes().item(0).getNodeValue().trim();
+                    try {
+                       logFile = new File(fileName);
+                       bis = new BufferedReader(new InputStreamReader(new FileInputStream(logFile)));
+                        } catch (IOException e) {
+                            System.out.println("Uh oh, got an IOException error!" + e.getMessage());
+                        } finally {
+                            }
+                }
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("MaxNumberOfRequest"))
+                    MaxNumberOfRequest=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim());
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("NumberofBasicNode"))
+                    NumberofBasicNode=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim());
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("timeTreshold"))
+                  timeTreshold=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim()); //
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("Percentage"))
+                  SLAPercentage=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim()); //
+                //We dont have server list now but may be in future we had
+                /*if(childNodes.item(i).getNodeName().equalsIgnoreCase("ServerList"))
+                {
+                    String str = childNodes.item(i).getChildNodes().item(0).getNodeValue().trim();
+                    String[] split = str.split(" ");
+                    for(int j=0;j<split.length;j++)
+                    {
+                        int serverIndex=Integer.parseInt(split[j]);
+                        int indexChassis=serverIndex/DC.chassisSet.get(0).servers.size();
+                        int indexServer=serverIndex%DC.chassisSet.get(0).servers.size();
+                        addCompNodetoBundle(DC.chassisSet.get(indexChassis).servers.get(indexServer));
+                        DC.chassisSet.get(indexChassis).servers.get(indexServer).Mips=1;
+                        DC.chassisSet.get(indexChassis).servers.get(indexServer).ready=1;
+                        ComputeNodeIndex.add(serverIndex);
+                    }
+                }*/
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("minProcessor"))
+                {
+                        minProc=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim());
+                }
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("maxProcessor"))
+                {
+                       maxProc=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim());
+                }
+                if(childNodes.item(i).getNodeName().equalsIgnoreCase("SLA"))
+                {
+                       maxExpectedResTime=Integer.parseInt(childNodes.item(i).getChildNodes().item(0).getNodeValue().trim());
+                }
+            }
+        }
+    }
+    void destroyApplicationBundle() throws IOException
+    {   for(int i=0;i<ComputeNodeList.size();i++)
+        {
+            ComputeNodeList.get(i).restart();
+        }
+        bis.close();
+    }
+    //Check the responseTime of each server for setting the frequency level for the next time slot
+    
+  /*  double  finalized ()
+    {
+        try {
+            bis.close();
+        } catch (IOException ex) {
+            Logger.getLogger(EnterpriseBoN.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        double meanResponsetime=0;
+        double totalJob=0;
+        for(int i=0;i<Main.responseList.size();i++) {
+            meanResponsetime=meanResponsetime+ Main.responseList.get(i).responseTime*Main.responseList.get(i).numberOfJob;
+            totalJob+=Main.responseList.get(i).numberOfJob;
+            //System.out.println("respTime="+serverList.get(i).respTime+"\t TotalJob="+serverList.get(i).totalJob);
+        }
+
+        return meanResponsetime;///totalJob;
+    }*/
+}

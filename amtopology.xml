@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><AmConfig><AMType><MoType>Enterprise_01</MoType><AmJavaClass>pwmng.AMEnterpriseSys2</AmJavaClass></AMType><AMType><MoType>EntApp01</MoType><AmJavaClass>pwmng.AMApplication2</AmJavaClass></AMType><AMType><MoType>Enterprise_02</MoType><AmJavaClass>pwmng.AMEnterpriseSys3</AmJavaClass></AMType><AMType><MoType>EntApp02</MoType><AmJavaClass>pwmng.AMApplication3</AmJavaClass></AMType><AMType><MoType>DataCenter</MoType><AmJavaClass>pwmng.AMDataCenter</AmJavaClass></AMType><Previllages>N,1,N,N,N,;
+N,N,N,N,N,;
+N,N,N,1,N,;
+N,N,N,N,N,;
+N,N,N,N,N,;
+</Previllages></AmConfig>

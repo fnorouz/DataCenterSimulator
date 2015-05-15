@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>   
+ <Interactive>
+    <ComputeNode> 5 </ComputeNode>
+    <Rack>6 </Rack>
+    <ResourceAllocationAlg> Minimum-Heat-Recirculation </ResourceAllocationAlg>
+    <Scheduler> FCFS</Scheduler>
+    <WorkLoad>test_inter.txt</WorkLoad>
+</Interactive>
+
+
+    

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>   
+ <Interactive>
+     <moType>Intractive_01</moType>
+    <ComputeNode> 50 </ComputeNode>
+    <Rack>7 </Rack>
+    <ResourceAllocationAlg> Minimum-Heat-Recirculation </ResourceAllocationAlg>
+    <Scheduler> FCFS</Scheduler>
+    <WorkLoad>test_inter2.txt</WorkLoad>
+</Interactive>
+    

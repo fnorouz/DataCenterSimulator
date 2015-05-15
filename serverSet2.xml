@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : serverSet.xml
+    Created on : September 19, 2011, 3:43 PM
+    Author     : nooshin
+    Description:
+        Purpose of the document follows.
+-->
+
+<System>
+    <type> Cloud </type>
+    <ComputeNode> 5 </ComputeNode>
+    <ResourceAllocationAlg> </ResourceAllocationAlg>
+    <Scheduler> </Scheduler>
+    <Workload> Copy of Log.txt </WorkLoad>
+    <workLoadType> Batch </workLoadType>
+    <SLA> </SLA>
+</System>
+<System>
+    <type> Compute </type>
+    <ComputeList> n m j p k </ComputeList>
+    <ComputeNode> 5 </ComputeNode>
+    <Core> 2</Core>
+    <ResourceAllocationAlg> </ResourceAllocationAlg>
+    <Scheduler> </Scheduler>
+    <WorkLoad> LogFILE</WorkLoad>
+</System>
+<System>
+    <type> Transactional </type>
+    <ComputeNode> 3</ComputeNode>
+    <ResourceAllocationAlg> </ResourceAllocationAlg>
+    <Scheduler> </Scheduler>
+    <ComputeList> n m j p k </ComputeList>
+    <Application>
+        <id> 1 </id>
+        <minProcessor> 1 </minProcessor>
+        <maxProcessor> 2</maxProcessor>
+        <WorkLoad> transaction.txt</WorkLoad>
+        <timeTreshold> 3 </timeTreshold>
+        <Percentage> 90   </Percentage>
+    </Application>
+    <Application> </Application>
+</System>
+<System>
+    <Type> Interactive </Type>
+    <ComputeNode> 3 </ComputeNode>
+    <ComputeList> n m j p k </ComputeList>
+    <ResourceAllocationAlg> </ResourceAllocationAlg>
+    <Scheduler> </Scheduler>
+    <InputLog>interactive.txt</InputLog>
+    <ExpectedMaxRes> 3</ExpectedMaxRes>
+</System>
